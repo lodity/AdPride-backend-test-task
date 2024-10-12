@@ -9,7 +9,9 @@ We store health check result in database and show it to client in dashboard.
   We need to use configurable JWT secret. Use `.env` file.
 - In module `auth` we have security issue with `password` in `AuthService`.
   - What is the problem?
+    - Password Leak: If the password database is compromised, all passwords will be available in clear text.
   - How to fix it?
+    - It is necessary to implement password hashing during storage and validation using hash functions during authorization.
 - Prepare controller CRUD in module `project`
   - Create project
   - Update project
