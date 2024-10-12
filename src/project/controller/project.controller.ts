@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -21,23 +22,49 @@ import { UpdateProjectDto } from '../dto/update-project.dto';
 export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
-  @Get()
-  async list(@Request() req): Promise<ProjectListResponse> {
+  @Get('projects')
+  async list(
+    @Request() req,
+    @Query('limit') limit: string,
+    @Query('offset') offset: string,
+    @Query('search') search: string,
+  ): Promise<ProjectListResponse> {
     const userId = req.user.sub as number;
 
-    const list: Project[] = await this.projectService.findMany({
-      where: { userId, deleted: false },
+    const filterParams = {
+      where: {
+        userId,
+        deleted: false,
+        OR: [
+          { name: { contains: search || '' } },
+          { url: { contains: search || '' } },
+        ],
+      },
+    };
+
+    const projects: Project[] = await this.projectService.findMany({
+      ...filterParams,
+      skip: +offset || 0,
+      take: +limit || 10,
     });
 
-    return list.map((x: Project) => ({
-      id: x.id,
-      name: x.name,
-      url: x.url,
-      status: x.status,
-      expiredAt: x.expiredAt,
-      createdAt: x.createdAt,
-      updatedAt: x.updatedAt,
-    }));
+    const total = await this.projectService.count(filterParams);
+
+    return {
+      data: projects.map((x: Project) => ({
+        id: x.id,
+        name: x.name,
+        url: x.url,
+        status: x.status,
+        expiredAt: x.expiredAt,
+        createdAt: x.createdAt,
+        updatedAt: x.updatedAt,
+      })),
+      total,
+      size: projects.length,
+      offset: Number(offset) || 0,
+      limit: Number(limit) || 10,
+    };
   }
 
   @Post()

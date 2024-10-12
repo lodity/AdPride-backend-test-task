@@ -12,6 +12,10 @@ export class ProjectService {
     return this.prismaService.project.findMany(args);
   }
 
+  async count(args: Prisma.ProjectCountArgs): Promise<number> {
+    return this.prismaService.project.count(args);
+  }
+
   async create(createProjectDto: CreateProjectWithUserIdDto) {
     return this.prismaService.project.create({ data: createProjectDto });
   }
